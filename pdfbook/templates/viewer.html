@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.worker.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='pdfbook.css') }}">
+    </head>
+    <body>
+        <script>var target = {{ TARGET_URL | tojson }}, dir = 'ltr';</script>
+        <script>
+            function renderPage(page, $pc) {
+                var width = $pc.width(), height = $pc.height();
+                var vp = page.getViewport({scale: 1.0});
+                var scale = Math.min(height / vp.height, width / vp.width);
+                vp = page.getViewport({scale: scale});
+
+                var canvas = document.createElement('canvas');
+                $pc.append(canvas);
+                canvas.width = Math.ceil(vp.width);
+                canvas.height = Math.ceil(vp.height);
+                var ctx = canvas.getContext('2d');
+
+                var renderContext = {
+                    canvasContext: ctx,
+                    viewport: vp
+                };
+                page.render(renderContext);
+            }
+            function renderView(pdf, view) {
+                view.forEach(p => {
+                    if (p == 0) return;
+                    // after firing "turning" event, turn.js moves page content to another element
+                    // for page-turning animation. so we may not be able to access page-content
+                    // element with selector from inside the callback. get hold of the element before
+                    // calling getPage.
+                    const $pc = $('#flipbook div.turn-page-wrapper[page="' + p +'"] div.page-content');
+                    var $canvas = $pc.find('canvas');
+                    if ($canvas.length == 0) {
+                        pdf.getPage(p).then(page => renderPage(page, $pc));
+                    }
+                });
+            }
+            // workerSrc should be set before calling getDocument()
+            pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.worker.js";
+            var loadingTask = pdfjsLib.getDocument(target);
+            loadingTask.promise.then(pdf => {
+                var book = $('#flipbook');
+
+                // create page content elements
+                var pageSideClass = dir == 'ltr' ? ['right', 'left'] : ['left', 'right'];
+                for (var p = 0; p < pdf.numPages; p++) {
+                    var $pc = $('<div class="page-content">').appendTo(book);
+                    $pc.addClass(pageSideClass[p % 2]);
+                }
+
+                book.turn({
+                    direction: 'ltr',
+                    height: 800,
+                    width: '100%',
+                    autoCenter: true
+                });
+                book.bind("turning", (event, p, view) => {
+                    // view is a list of pages shown
+                    console.log('turning page %s view=%o', p, view);
+                    renderView(pdf, view);
+                });
+                book.bind("turned", (event, page, view) => {
+                     console.log('turned page %s view=%o', page, view);
+                     if (page == 1) {
+                         renderView(pdf, view);
+                     }
+                });
+                var turnAction = { left: 'previous', right: 'next' };
+                $('#left-button').on('click', () => {
+                    book.turn(turnAction['left']);
+                });
+                $('#right-button').on('click', () => {
+                    book.turn(turnAction['right']);
+                });
+                book.turn('page', 1);
+            });
+        </script>
+        <div class="container">
+            <div class="header">Header</div>
+            <div class="desk">
+                <div class="book">
+                    <div id="left-button" class="turn-btn"><span>&#x27E8;</span></div>
+                    <div id="flipbook" class="flipbook">
+                    </div>
+                    <div id="right-button" class="turn-btn"><san>&#x27E9;</san></div>
+                </div>
+            </div>
+            <div class="footer">Footer</div>
+        </div>
+    </body>
+</html>
