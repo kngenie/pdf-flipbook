@@ -71,6 +71,9 @@ body {
     flex-grow: 1;
     overflow: hidden;
 }
+.flipbook {
+    transition: margin 700ms;
+}
 .flipbook .shadow {
     box-shadow: 0 4px 10px #333;
 }
