@@ -2,8 +2,8 @@
 <html>
     <head>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.worker.js"></script>
+        <script src="{{ url_for('static', filename='pdfjs/build/pdf.js') }}"></script>
+        <script src="{{ url_for('static', filename='pdfjs/build/pdf.worker.js') }}"></script>
         <script src="{{ url_for('static', filename='turnjs4/lib/turn.js') }}"></script>
         <script src="{{ url_for('static', filename='pdfbook.js') }}"></script>
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='pdfbook.css') }}">

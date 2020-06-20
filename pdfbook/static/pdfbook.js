@@ -87,7 +87,11 @@ function renderbook(target, dir) {
     // workerSrc should be set before calling getDocument()
     pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.worker.js";
     updateProgress(true);
-    var loadingTask = pdfjsLib.getDocument(target);
+    var loadingTask = pdfjsLib.getDocument({
+	url: target,
+	cMapUrl: 'static/pdfjs/web/cmaps/',
+	cMapPacked: true
+    });
     loadingTask.onProgress = updateProgress;
     loadingTask.promise.then(pdf => {
         updateProgress(false);
